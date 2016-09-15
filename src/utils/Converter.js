@@ -53,7 +53,7 @@ const hatenak2textile = (input) => {
 
   // blockquote
   text = text.replace(/^\>\>\n([\s\S]*?)\n\<\</mg, function() {
-    return 'bq.' + arguments[1] + '\n';
+    return 'bq. ' + arguments[1] + '\n';
   });
 
   // list
