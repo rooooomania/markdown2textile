@@ -18,11 +18,11 @@ const markdown2hatenak = (input) => {
   });
 
   // list
-  text = text.replace(/^((?:[ ]{4})+)\-/mg, function () {
-    return arguments[1].replace(/[ ]{4}/g,'-') + '-';
+  text = text.replace(/^((?:[ ]{1,2})+)[\*\-]/mg, function () {
+    return arguments[1].replace(/[ ]{1,2}/g,'-') + '-';
   });
   text = text.replace(/^([ ]+)?(?:[0-9]+\.)/mg, function () {
-    return ((arguments[1]) ? arguments[1].replace(/[ ]{4}/g,'+') : '' ) + '+';
+    return ((arguments[1]) ? arguments[1].replace(/[ ]{1,2}/g,'+') : '' ) + '+';
   });
 
   // link
