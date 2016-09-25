@@ -8,11 +8,13 @@ import { createStore, combineReducers } from 'redux';
 const initialState = {
   entriesById: {},
   entryIds: [],
+  currentEntryId: '',
 };
 
 const entriesById = (state = initialState.entriesById, action) => {
   switch (action.type) {
     case 'ADD_ENTRY':
+    case 'EDIT_ENTRY':
       const newAction = Object.assign(
         {},
         action
@@ -23,29 +25,64 @@ const entriesById = (state = initialState.entriesById, action) => {
         ...state,
         [action.id]: newAction,
       };
+    case 'DELETE_ENTRY':
+      const newState = Object.assign(
+        {},
+        state
+      );
+      delete newState[action.id];
+      return newState;
 
     default:
       return state;
   }
 };
 
-const entryIDs = (state = initialState.entryIds, action) => {
+const entryIds = (state = initialState.entryIds, action) => {
   switch (action.type) {
     case 'ADD_ENTRY':
       return [
         ...state,
-        'testId',
+        action.id,
       ];
+    case 'EDIT_ENTRY':
+      return state;
+    case 'DELETE_ENTRY':
+      return state.filter(id => id !== action.id);
 
     default:
       return state;
   }
 };
 
-export const entryReducer = combineReducers({
+const currentEntryId = (state = initialState.currentEntryId, action) => {
+  switch (action.type) {
+    case 'SET_CURRENT_ENTRY':
+      return action.id;
+    case 'CLEAR_CURRENT_ENTRY':
+      return initialState.currentEntryId;
+    default:
+      return state;
+  }
+};
+
+
+const Entries = combineReducers({
   entriesById,
-  entryIDs
+  entryIds,
+  currentEntryId
 });
+
+/*
+ * APIs
+ */
+
+export const getEntriesById = (parentState, id) =>
+  parentState.entriesById[id];
+export const getEntryIds = (parentState) => parentState.entryIds;
+export const getCurrentEntryId = (parentState) => parentState.currentEntryId;
+
+export default Entries;
 
 /*
  * test code
@@ -71,5 +108,3 @@ const testAddEntry = () => {
 // console.log('test passed.');
 
 
-const store = createStore(entryReducer);
-console.log(store.getState());
