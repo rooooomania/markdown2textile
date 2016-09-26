@@ -3,7 +3,8 @@
  */
 
 import expect from 'expect';
-import { createStore, combineReducers } from 'redux';
+import { combineReducers } from 'redux';
+import Constants from '../constants';
 
 const initialState = {
   entriesById: {},
@@ -13,8 +14,8 @@ const initialState = {
 
 const entriesById = (state = initialState.entriesById, action) => {
   switch (action.type) {
-    case 'ADD_ENTRY':
-    case 'EDIT_ENTRY':
+    case Constants.ADD_ENTRY:
+    case Constants.EDIT_ENTRY:
       const newAction = Object.assign(
         {},
         action
@@ -25,7 +26,7 @@ const entriesById = (state = initialState.entriesById, action) => {
         ...state,
         [action.id]: newAction,
       };
-    case 'DELETE_ENTRY':
+    case Constants.DELETE_ENTRY:
       const newState = Object.assign(
         {},
         state
@@ -40,14 +41,14 @@ const entriesById = (state = initialState.entriesById, action) => {
 
 const entryIds = (state = initialState.entryIds, action) => {
   switch (action.type) {
-    case 'ADD_ENTRY':
+    case Constants.ADD_ENTRY:
       return [
         ...state,
         action.id,
       ];
-    case 'EDIT_ENTRY':
+    case Constants.EDIT_ENTRY:
       return state;
-    case 'DELETE_ENTRY':
+    case Constants.DELETE_ENTRY:
       return state.filter(id => id !== action.id);
 
     default:
@@ -57,9 +58,9 @@ const entryIds = (state = initialState.entryIds, action) => {
 
 const currentEntryId = (state = initialState.currentEntryId, action) => {
   switch (action.type) {
-    case 'SET_CURRENT_ENTRY':
+    case Constants.SET_CURRENT_ENTRY:
       return action.id;
-    case 'CLEAR_CURRENT_ENTRY':
+    case Constants.CLEAR_CURRENT_ENTRY:
       return initialState.currentEntryId;
     default:
       return state;

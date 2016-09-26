@@ -1,16 +1,39 @@
-export const addEntry = (id, entry) => ({
-  type: 'ADD_ENTRY',
+// for 'this' problem, see "https://github.com/reactjs/redux/issues/1465"
+
+import Constants from '../constants';
+
+const addEntry = ({id, entry}) => ({
+  type: Constants.ADD_ENTRY,
   id,
   entry,
 });
 
-export const editEntry = (id, entry) => ({
-  type: 'EDIT_ENTRY',
+const editEntry = ({id, entry}) => ({
+  type: Constants.EDIT_ENTRY,
   id,
   entry
 });
 
-export const clearCurrentEntry = () => ({
-  type: 'CLEAR_CURRENT_ENTRY',
+const deleteEntry = (id) => ({
+  type: Constants.DELETE_ENTRY,
+  id,
 });
 
+const clearCurrentEntry = () => ({
+  type: Constants.CLEAR_CURRENT_ENTRY,
+});
+
+const setCurrentEntry = (id) => ({
+  type: Constants.SET_CURRENT_ENTRY,
+  id
+});
+
+const Actions = {
+  addEntry,
+  editEntry,
+  deleteEntry,
+  clearCurrentEntry,
+  setCurrentEntry,
+};
+
+export default Actions;

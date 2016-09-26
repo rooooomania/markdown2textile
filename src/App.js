@@ -1,19 +1,21 @@
 import React, {Component} from 'react';
 import { connect } from 'react-redux';
 import { Grid, Col, Row } from 'react-bootstrap';
-import { Paper, Menu, MenuItem} from 'material-ui';
-import { RaisedButton, FlatButton } from 'material-ui';
+import { RaisedButton } from 'material-ui';
 import TextField from 'material-ui/TextField';
 import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
+import CopyToClipboard from 'react-copy-to-clipboard';
 import marked from 'marked';
 import { markdown2Textile } from './utils/Converter';
 import 'github-markdown-css';
 import CardComponent from './components/CardComponent';
+import EntryList from './components/EntryList';
 import { getEntryIds, getEntriesById, getCurrentEntry } from './configuredStore';
-import { addEntry, editEntry, clearCurrentEntry } from './actions/actionCreator';
+import actions from './actions/actionCreator';
+import Snackbar from 'material-ui/Snackbar';
+
 
 import uuid from 'node-uuid';
-
 const v4 = uuid.v4;
 
 import injectTapEventPlugin from 'react-tap-event-plugin';
@@ -30,67 +32,36 @@ const mdStyle = {
   padding: '5px',
 };
 
-
-const EntryList = ({
-  entries,
-  handleClick,
-  dispatch
-}) => {
-  return (
-  <Paper>
-    <ul>
-      {entries.map(e => <li
-        id={e.id}
-        key={e.id}
-        >
-        <span onClick={handleClick(e.id)}>{e.entry.split("\n")[0]}</span>
-        <FlatButton
-          label='delete'
-          onClick={ el => {
-            dispatch({
-              type: 'DELETE_ENTRY',
-              id: e.id,
-            });
-
-            const newStorage = entries.filter(elm => elm.id !== e.id)
-            localStorage.setItem('entries', JSON.stringify(newStorage)) ;
-          }}
-        />
-        </li>
-      )}
-    </ul>
-  </Paper>
-)};
-
-
 class App extends Component {
   constructor(props) {
     super(props);
 
+    console.log('props', this.props)
     this.state = {
       editor: '',
+      open: false,
     };
 
     this.handleChange = this.handleChange.bind(this);
     this.handleClick = this.handleClick.bind(this);
     this.handleClickList = this.handleClickList.bind(this);
+    this.handleTouchTap = this.handleTouchTap.bind(this);
+    this.handleRequestClose = this.handleRequestClose.bind(this);
   }
 
   handleClick(e) {
-    const { entries, currentEntry, dispatch } = this.props;
+    const { entries, currentEntry, addEntry, editEntry, clearCurrentEntry } = this.props;
     if (this._input.props.value) {
       const id = v4();
       currentEntry ?
-        dispatch(editEntry(currentEntry.id, this._input.props.value)) :
-        dispatch(addEntry(id,this._input.props.value));
-
-
+        editEntry({id: currentEntry.id, entry: this._input.props.value}) :
+        addEntry({id: id, entry: this._input.props.value});
 
       this.setState({
         editor: '',
       });
 
-      dispatch(clearCurrentEntry());
+      clearCurrentEntry();
 
       localStorage.setItem('entries', JSON.stringify([
         ...entries,
@@ -101,20 +72,30 @@ class App extends Component {
   }
 
   handleClickList(id) {
-    const { dispatch } = this.props;
-    return function (e) {
-      dispatch({
-        type: 'SET_CURRENT_ENTRY',
-        id,
-      });
+    const { setCurrentEntry } = this.props;
+    return function(e) {
+      console.log('setCurrentEntry invoked');
+      setCurrentEntry(id);
     };
   }
 
+  handleTouchTap() {
+    this.setState({
+      open: true,
+    });
+  }
+
+  handleRequestClose() {
+    this.setState({
+      open: false,
+    })
+  }
+
   componentDidMount() {
-    const { dispatch } = this.props;
+    const { addEntry } = this.props;
     const entries = JSON.parse(window.localStorage.getItem('entries'));
     if (entries.length) {
-      return entries.map(e => dispatch(addEntry(e.id, e.entry)));
+      return entries.map(e => addEntry({ id: e.id, entry: e.entry}));
     }
   }
 
@@ -125,7 +106,7 @@ class App extends Component {
   }
 
   componentWillReceiveProps(nextProps) {
-    const { currentEntry, entries } = nextProps;
+    const { currentEntry } = nextProps;
     if (currentEntry && this._input.value !== currentEntry.entry) {
       this.setState({
         editor: currentEntry.entry,
@@ -139,6 +120,7 @@ class App extends Component {
   }
 
   render() {
+    const { deleteEntry } = this.props;
     const { editor } = this.state;
     const markdowned = marked(this.state.editor);
     const storage = window.localStorage.getItem('entries');
@@ -149,9 +131,9 @@ class App extends Component {
           <Row>
             <Col sm={12} md={4}>
               <EntryList
-                dispatch={this.props.dispatch}
                 entries={this.props.entries.length ? this.props.entries : JSON.parse(storage) || []}
                 handleClick={this.handleClickList}
+                deleteEntry={deleteEntry}
               />
             </Col>
             <Col sm={12} md={8}>
@@ -174,11 +156,30 @@ class App extends Component {
                       primary={true}
                       onClick={this.handleClick}
                     />
+                    <CopyToClipboard
+                      text={markdown2Textile(this.state.editor)}
+                    >
+                      <RaisedButton
+                        onTouchTap={this.handleTouchTap}
+                        label="Copy to Clipboard"
+                        primary={false}
+                      />
+                    </CopyToClipboard>
                   </CardComponent>
                 </Col>
               </Row>
               <Row>
-                <Col sm={12} md={6}>
+                <Col sm={12} md={12}>
+                  <h2>Result</h2>
+                  <div
+                    className="markdown-body"
+                    style={mdStyle}
+                    dangerouslySetInnerHTML={{
+                      __html: markdowned,
+                    }}
+                  />
+                </Col>
+                <Col sm={12} md={12}>
                   <CardComponent
                     title="Textile Viewer" >
                     <TextField
@@ -189,20 +190,15 @@ class App extends Component {
                     />
                   </CardComponent>
                 </Col>
-                <Col sm={12} md={6}>
-                  <h2>Result</h2>
-                  <div
-                    className="markdown-body"
-                    style={mdStyle}
-                    dangerouslySetInnerHTML={{
-                      __html: markdowned,
-                    }}
-                  />
-                </Col>
               </Row>
             </Col>
           </Row>
         </Grid>
+        <Snackbar
+          open={this.state.open}
+          message='your textile was copied on clip board'
+          autoHideDuration={3000}
+          onRequestClose={this.handleRequestClose} />
       </div>
     );
   }
@@ -220,7 +216,7 @@ const mapStateToProps = (state, ownProps) => {
 
 App = connect(
   mapStateToProps,
-  null
+  actions
 )(App);
 
 const MuiApp = () => (
